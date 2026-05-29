@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theme Shift Timer</title>
+    <style>
+        /* Base Setup */
+        * { box-sizing: border-box; transition: all 0.3s ease; font-family: 'Segoe UI', sans-serif; }
+        body { margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; background: #f5f5f5; }
+        .theme-selector { margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        .theme-btn { padding: 10px 20px; border: none; cursor: pointer; font-weight: bold; border-radius: 20px; }
+        
+        .container { width: 100%; max-width: 600px; padding: 30px; border-radius: 15px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .timer-display { font-size: 4rem; font-weight: bold; margin: 20px 0; }
+        .inputs { margin-bottom: 20px; }
+        .inputs input { width: 70px; padding: 8px; text-align: center; font-size: 1.2rem; border-radius: 8px; border: 1px solid #ccc; margin: 0 5px; }
+        .controls button { padding: 10px 25px; font-size: 1rem; margin: 5px; border: none; cursor: pointer; border-radius: 8px; font-weight: bold; }
+
+        /* --- THEME STYLES --- */
+        /* 1. COZY VIBE */
+        body.theme-cozy { background: #f4eae1; color: #5a4a42; }
+        .theme-cozy .container { background: #e8d8ce; border: 2px solid #d0bcac; }
+        .theme-cozy button { background: #8a6f5d; color: white; border-radius: 30px; }
+
+        /* 2. PROFESSIONAL */
+        body.theme-professional { background: #0f172a; color: #f8fafc; font-family: monospace; }
+        .theme-professional .container { background: #1e293b; border: 1px solid #334155; border-radius: 4px; box-shadow: none; }
+        .theme-professional button { background: #38bdf8; color: #0f172a; border-radius: 4px; font-family: monospace; }
+        .theme-professional input { background: #334155; color: white; border: 1px solid #475569; border-radius: 4px; }
+
+        /* 3. CUTE/KAWAII */
+        body.theme-cute { background: #fff0f5; color: #ff69b4; }
+        .theme-cute .container { background: #ffffff; border: 3px dashed #ffb6c1; border-radius: 30px; }
+        .theme-cute button { background: #ffb6c1; color: white; border-radius: 50px; box-shadow: 0 4px 0 #ff91a4; }
+        .theme-cute button:active { transform: translateY(4px); box-shadow: none; }
+
+        /* 4. CARTOON-ISH */
+        body.theme-cartoon { background: #facc15; color: #000000; }
+        .theme-cartoon .container { background: #ffffff; border: 4px solid #000000; box-shadow: 8px 8px 0px #000000; border-radius: 0px; }
+        .theme-cartoon button { background: #f97316; color: white; border: 3px solid #000000; box-shadow: 4px 4px 0px #000000; border-radius: 0px; text-transform: uppercase; }
+        .theme-cartoon button:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px #000000; }
+        .theme-cartoon input { border: 3px solid #000000; font-weight: bold; border-radius: 0px; }
+    </style>
+</head>
+<body class="theme-cozy">
+
+    <div class="theme-selector">
+        <button class="theme-btn" style="background:#e8d8ce;" onclick="setTheme('cozy')">Cozy Vibe ☕</button>
+        <button class="theme-btn" style="background:#1e293b; color:white;" onclick="setTheme('professional')">Professional 💼</button>
+        <button class="theme-btn" style="background:#ffb6c1;" onclick="setTheme('cute')">Cute Kawaii 🌸</button>
+        <button class="theme-btn" style="background:#facc15;" onclick="setTheme('cartoon')">Cartoon-ish ⚡</button>
+    </div>
+
+    <div class="container">
+        <h2 id="title-text">Cozy Timer</h2>
+        <div class="timer-display" id="display">05:00</div>
+        
+        <div class="inputs">
+            <input type="number" id="minInput" placeholder="Min" value="5" min="0" max="99">
+            <span>:</span>
+            <input type="number" id="secInput" placeholder="Sec" value="0" min="0" max="59">
+        </div>
+
+        <div class="controls">
+            <button onclick="startTimer()">Start</button>
+            <button onclick="pauseTimer()">Pause</button>
+            <button onclick="resetTimer()">Reset</button>
+        </div>
+    </div>
+
+    <script>
+        let countdown;
+        let timeLeft = 300; 
+        let isRunning = false;
+
+        const display = document.getElementById('display');
+        const minInput = document.getElementById('minInput');
+        const secInput = document.getElementById('secInput');
+
+        function setTheme(theme) {
+            document.body.className = 'theme-' + theme;
+            const titles = { cozy: 'Cozy Timer ☕', professional: 'SYSTEM_TIMER.EXE', cute: 'Lovely Time ✨', cartoon: 'BOOM TIMER! 💥' };
+            document.getElementById('title-text').innerText = titles[theme];
+        }
+
+        function updateDisplay() {
+            let minutes = Math.floor(timeLeft / 60);
+            let seconds = timeLeft % 60;
+            display.innerText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function startTimer() {
+            if (isRunning) return;
+            
+            // If stopped, grab values from input fields
+            if (timeLeft === 300 || !countdown) {
+                timeLeft = (parseInt(minInput.value) || 0) * 60 + (parseInt(secInput.value) || 0);
+            }
+            
+            if (timeLeft <= 0) return;
+
+            isRunning = true;
+            countdown = setInterval(() => {
+                timeLeft--;
+                updateDisplay();
+
+                if (timeLeft <= 0) {
+                    clearInterval(countdown);
+                    isRunning = false;
+                    // Standard browser alert sound
+                    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = audioCtx.createOscillator();
+                    osc.connect(audioCtx.destination);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 1);
+                    alert("Time is up!");
+                }
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            clearInterval(countdown);
+            isRunning = false;
+        }
+
+        function resetTimer() {
+            clearInterval(countdown);
+            isRunning = false;
+            timeLeft = (parseInt(minInput.value) || 0) * 60 + (parseInt(secInput.value) || 0);
+            updateDisplay();
+        }
+    </script>
+</body>
+</html>
